@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
+require 'schedulight'
+
+
+
+dsl = Schedulight::DSL.new
+
+dsl.load('sample_schedule.schlg')
+
+p Schedulight::TimeMark.all
+p Schedulight::Teacher.all
+p Schedulight::Subject.all
+p Schedulight::Grade.all
+p Schedulight::Classroom.all
+
