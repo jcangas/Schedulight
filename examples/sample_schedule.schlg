@@ -1,0 +1,45 @@
+
+
+# DSL sample
+
+hours_per_day 5
+
+subjects :math, :biology, :computers, :idiom, :philosofy
+
+teacher(:Jhon) {
+
+  gives :math, :biology, :computers
+
+}
+
+
+teacher(:Mary) {
+
+   gives :computers, :idiom, :philosofy
+
+}
+
+
+teacher(:Bob) {
+
+    gives :history, :idiom, :philosofy
+
+}
+
+
+grade(:First) {
+
+    workload {
+        history 3
+        math   5
+        biology  4
+        computers 4
+        idiom  5
+        philosofy 3
+    }
+}
+
+classroom("A") {
+    grade :First
+}
+
