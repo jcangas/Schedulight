@@ -9,11 +9,30 @@ FiberProlog::Lang.instance_eval do
 
     fails.native! { |r|  r.fails }
 
-    write(:S).native! { |r| STDOUT.print "#{r[:S].value}"; true }
+    equ(:X, :Y).native! {|r| r[:X] == r[:Y] }
+
+    write(:S).native! do |r|
+      case r[:S].value
+        when Array
+          ruby_val = r[:S].value.map {|x| x.value}
+        else
+          ruby_val = r[:S].value
+      end
+      STDOUT.print "#{ruby_val}"
+      true
+    end
 
     newln.native! { |r| STDOUT.puts ""; true }
 
-    writeln(:X).if write(:X), newln, cut
+    writeln(:S).if write(:S), newln
+    write_stack(:S).native! { |r| FiberProlog::Environment.write_stack(r[:S].value); true}
+
+    genN(:N, :K).native! { |r| (1..r[:N].value).each {|n|
+          r[:K] == n
+          r.suspend
+        }
+        r.fails
+    }
 
     collect(:V, :P, :R).native! { |r|
       b = r[:V].bindings

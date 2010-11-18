@@ -4,18 +4,33 @@
 #
 
 module Schedulight
-  class Model
-    attr_reader :id
 
-    def initialize(id,  &block )
-      @id = id
-      self.instance_eval(&block) if block
-      self.class.all << self
-    end
+    Model = Struct.new('Model', :id) do
 
     def self.all
       @all ||= []
       @all
+    end
+
+    def to_s
+       n = self.class.name.split('::').last
+      "{#{n} id= #{id}}"
+    end
+
+    def inspect
+      to_s
+    end
+
+    def initialize(id,  &block )
+      self.id = id
+      self.instance_eval(&block) if block
+      self.class.all << self
+    end
+
+    def self.find(ids)
+      keys = [ids].flatten
+      result = all.select { |x| keys.include?(x.id) }
+      keys.size == 1 ? result.first : result
     end
   end
 
@@ -33,7 +48,7 @@ module Schedulight
   end
 
   class Classroom < Model
-    def grade(grd)
+    def grade(grd=nil)
       return @grade if grd.nil?
       @grade = grd
     end

@@ -8,30 +8,47 @@ FiberProlog.run do
     calls: true,
     vars: !true,
     backtrack: true,
-    set_var: !true,
+    set_var: true,
     trace: ARGV[0]
 
-  genN(:N, :K).native! { |r| (1..r[:N].value).each {|n|
-        r[:K] == n
-        r.suspend
-      }
-      r.fails
-  }
+    gen_N(:N, :K).native! { |r| (1..r[:N].value).each {|n|
+          r[:K] == n
+          r.suspend
+        }
+        r.fails
+    }
 
-  gensol(:A, :B, :C).if genN(2,:A), genN(2,:B), genN(2,:C)
+    gen_M(:N, :K).native! { |r| (1..r[:N].value).each {|n|
+          r[:K] == n
+          r.suspend
+        }
+        r.fails
+    }
 
-  genN_test.if genN(3, :N), writeln(:N), fails
+        gensol(:A, :B).if gen_N(2,:A), gen_M(2,:B)
 
-  genNM_test.if genN(3, :N), genN(3, :M), write(:N), writeln(:M), fails
 
-  gensol_test.if gensol(:X, :Y, :Z), write(:X), write(:Y), writeln(:Z), fails
 
-  collect_test.if collect(:X, genN(3, :X), :Result), writeln(:Result)
+        genN_test.if genN(2, :N), writeln(:N), fails
 
-  # goal.if genN_test
-  # goal.if genNM_test
-   goal.if gensol_test
-  # goal.if collect_test
+  goal_0.if genN_test
+
+        genNM_test.if gen_N(3, :N), gen_M(3, :M), write(:N), writeln(:M), fails
+
+  goal_1.if genNM_test
+
+        gensol_test.if gensol(:X, :Y), write(:X), writeln(:Y), fails
+
+  goal.if gensol_test
+
+        collect_test.if collect(:X, genN(3, :X), :Result), writeln(:Result)
+
+  goal_3.if collect_test
+
+        pair_test(:P).if genN(2, :N), genN(2, :M), equ(:P, [:N, :M])
+
+  goal_4.if pair_test(:R), writeln(:R), fails
+
 
   #member(:X, [ :X | :T])
   #member(:X, [ _ | :T]).if member(:X, :T)

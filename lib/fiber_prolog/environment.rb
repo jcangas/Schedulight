@@ -1,6 +1,6 @@
 module FiberProlog
 
-  module Engine
+  module Environment
 
     def self.find_var(vname, new_var=true)
       sf = @sframes.last
@@ -14,12 +14,19 @@ module FiberProlog
       end
 
       trace :vars, "find #{vname} for #{sf[:rule]} -> #{result}"
-      show_stack(:find_stack) if trace?(:vars)
+      write_stack(:find_stack) if trace?(:vars, :stack)
       result
     end
 
-    def self.caller_val(v)
-      v.is_a?(Symbol) ? find_var(v) : v
+    def self.solve_syms(a)
+      case a
+        when Symbol
+          Environment.find_var(a)
+        when Array
+          a.map{|x| solve_syms(x)}
+        else
+          a
+      end
     end
 
     def self.new_sf(rule)
@@ -30,9 +37,9 @@ module FiberProlog
     def self.push_sf(sf)
       @sframes ||= []
       r = sf[:rule]
-      r.vars.each_index {|i| r.vars[i].value = caller_val(r.args[i])}
+      r.vars.each_index {|i| r.vars[i] == solve_syms(r.args[i])}
       @sframes.push sf
-      show_stack(:push) if trace?(:stack)
+      write_stack(:push) if trace?(:stack)
     end
 
     def self.pop_sf
@@ -43,25 +50,26 @@ module FiberProlog
         vars = @sframes.last[:vars]
         vars.each_index {|i| vars[i].mark_ip!(@sframes.last[:ip])}
       end
-      show_stack(:pop) if trace?(:stack)
+      write_stack(:pop) if trace?(:stack)
     end
 
-    def self.show_stack(opration)
-      puts "#{opration}: "
+    def self.write_stack(opration)
+      title =  "---------- #{opration} ----------------"
+      puts title
       puts @sframes.reverse.join("\n")
-      puts "----------"
+      puts "-"*title.size
     end
 
     def self.trace!(v)
       @trace_on = v
     end
 
-    def self.trace?(chn)
-      @trace_on[chn] && @trace_on[:trace]
+    def self.trace?(*chn)
+      @trace_on[:trace] && chn.map{|opt| @trace_on[opt]}.all?
     end
 
-    def self.trace(kind, *msg)
-      puts *msg if trace?(kind)
+    def self.trace(channel, *msg)
+      puts *msg if trace?(channel)
     end
 #-----------------------------
     class << self

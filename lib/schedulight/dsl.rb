@@ -1,7 +1,7 @@
 module Schedulight
   class DSL
     def load(file_name)
-      source = File.read('sample_schedule.schlg')
+      source = File.read(file_name)
       instance_eval(source)
     end
 

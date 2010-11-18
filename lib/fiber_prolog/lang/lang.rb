@@ -3,15 +3,15 @@ module FiberProlog
   module Lang
 
     def self.goal
-      Engine.main_goal = define_rule(:goal)
+      Environment.main_goal = define_rule(:goal)
     end
 
     def self.trace!(v)
-      Engine.trace!(v)
+      Environment.trace!(v)
     end
 
     def self.trace?(chn)
-      Engine.trace?(chn)
+      Environment.trace?(chn)
     end
 
     def self.method_missing(name, *args)

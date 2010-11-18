@@ -1,17 +1,89 @@
 #!/usr/bin/env ruby
 
 $LOAD_PATH.unshift File.expand_path('../lib', File.dirname(__FILE__))
-require 'schedulight'
 
+require 'pathname'
+require 'fiber_prolog'
+require 'schedulight'
 
 
 dsl = Schedulight::DSL.new
 
-dsl.load('sample_schedule.schlg')
+dsl.load(Pathname(__FILE__).dirname.parent + 'examples' + 'sample_schedule.schlg' )
 
-p Schedulight::TimeMark.all
-p Schedulight::Teacher.all
-p Schedulight::Subject.all
-p Schedulight::Grade.all
-p Schedulight::Classroom.all
+# Using a basic Prolog as DSL, for chain-fordward / backtrack strategy
+# in order to compute valid schedules
+
+FiberProlog.run do
+  trace! stack: !true,
+    calls: true,
+    backtrack: true,
+    vars: !true,
+    set_var: !true,
+    trace: ARGV[0]
+
+  # FiberProlos allow implement clauses in native ruby:
+  # This feature wokrs fine
+
+  # Here is used to retrieve the problem input
+  time_mark(:T).native! {|r| Schedulight::TimeMark.all.each{|t|
+      r[:T] == t
+      r.suspend
+    }
+    r.fails
+  }
+
+  classroom(:C).native! {|r| Schedulight::Classroom.all.each{|c|
+      r[:C] == c
+      r.suspend
+    }
+    r.fails
+  }
+
+  subjects_for(:S, :C).native! { |r|
+     wkld = Schedulight::Grade.find(r[:C].value.grade).workload
+     subjs = Schedulight::Subject.find(wkld.keys)
+     subjs.each do |s|
+        r[:S] == s
+        r.suspend
+      end
+      r.fails
+  }
+
+  teachers_for(:T, :S).native! { |r|
+    tchs = Schedulight::Teacher.all.select { |x| x.subjects.include?(r[:S].value.id) }
+    tchs.each do |t|
+      r[:T] == t
+      r.suspend
+    end
+    r.fails
+  }
+
+
+  # ---------- THIS is the goal we need working ----------------
+  # Here how it works:
+  # ------------------------------------------------------------
+
+  # :CS returns each pairs (:TM, :CR) as a 2 element list (a ruby array)
+  class_sched(:CS).if time_mark(:TM), classroom(:CR), equ(:CS, [:TM, :CR])
+
+  # collect :CS in a :SCH-edule (so :SCH is a list of lists)
+  # Complete each :CS in :SCH to a candidate using previous
+  # teachers_for, subjects_for, etc. This way we get a
+  # candidate solution in :Sol. If validate(:Sol), report an stop,
+  # else backtrack for another candidate.
+
+  goal2.if collect(:CS, class_sched(:CS), :SCH), candidate(:CS, :Sol), validate(:Sol), cut, report(:Sol)
+
+  # Some goals I'm testing. The clause named "goal" is the true main clause
+  # Many test are working, but some issues are open
+
+
+
+
+  goal0.if time_mark(:TM), classroom(:C), equ(:CS, [:TM, :C]), writeln(:CS), fails
+
+  goal3.if time_mark(:TM), classroom(:C), subjects_for(:S, :C), teachers_for(:T, :S),
+          writeln([:TM, :C, :S, :T]) , fails
+end
 

@@ -33,10 +33,11 @@ module FiberProlog
       def initialize(*args)
         @body = self.class.body.clone
         #@body = self.class.body.map {|r| r.clone}
-        @sf = Engine.new_sf(self)
+        @sf = Environment.new_sf(self)
 
         self.class.vars.each {|n| self.vars << Var.new(n)}
         @args = args.clone
+        @can_retry = true
       end
 
       def vars
@@ -76,10 +77,11 @@ module FiberProlog
 
       def call
         start
-        trace :calls, "CALL #{self}"
+        trace :calls, "CALL #{self} ip:#{ip}"
         push_sf
         ok = @fiber.resume
-        trace :calls, "#{self} --> #{ok}"
+        @can_retry = @fiber.alive?
+        trace :calls, "#{self} --> #{ok} ip:#{ip} r:#{@can_retry} f:#{!@fiber.nil?}"
         pop_sf
         ok
       end
@@ -93,27 +95,25 @@ module FiberProlog
       end
 
       def init_args
-        args.each_index do |k|
-          @args[k] = (args[k].is_a?(Symbol) ? Engine.find_var(args[k], false) : args[k])
-        end
+        @args = Environment.solve_syms(@args)
       end
 
     protected
 
       def trace(channel, *msg)
-        Engine.trace(channel, *msg)
+        Environment.trace(channel, *msg)
       end
 
       def push_sf
-        Engine.push_sf(@sf)
+        Environment.push_sf(@sf)
       end
 
       def pop_sf
-        Engine.pop_sf
+        Environment.pop_sf
       end
 
-      def reset_ip
-        @sf[:ip] = 0
+      def reset_ip(val = 0)
+        @sf[:ip] = val
       end
 
       def inc_ip
@@ -132,50 +132,60 @@ module FiberProlog
 
       def done
         @fiber = nil
-        true
-      end
-
-      def can_retry?
-        #result = @fiber ? @fiber.alive? : false
-        result = @fiber.nil? || @fiber.alive?
-        done unless result
-        trace(:backtrack, "#{self}.can_retry? --> #{result}")
-        result
       end
 
       def at_cut?
         body[ip].is_a?(Cut)
       end
 
-      def backtrack_fails?
-        result = ip < 0 || at_cut?
-        if at_cut?
-          while ip >= 0 do
-            backtrack_one
-          end
-        end
+      def callable?
+        result = (@fiber ? @can_retry && @fiber.alive? : true)
+        trace(:backtrack, "#{name}.callable? --> #{result} ip: #{ip} r:#{@can_retry} f:#{!@fiber.nil?}") unless result
         result
       end
 
       def backtrack_vars
+        trace(:backtrack, "#{name}.backtrack_vars for #{ip}")
         self.vars.each{|v| v.backtrack!(ip)}
       end
 
+      def restart
+        #body.each{|r| r.restart}
+        done
+        @can_retry = true
+      end
+
       def backtrack_one
-        trace(:backtrack, "backtrack #{ip}")
-        body[ip].done
+        trace(:backtrack, "#{body[ip].name} backtrack done")
         backtrack_vars
+        body[ip].restart
         dec_ip
       end
 
+      def can_retry?
+        backtrack_one while ip >= 0 if at_cut?
+        result = (ip >= 0) && body[ip].callable?
+        trace(:backtrack, "#{name}.can_retry? #{body[ip].name} --> #{result}") unless result
+        result
+      end
+
+      def find_backtrack
+        trace(:backtrack, "#{name}.find_backtrack")
+        backtrack_one until ip < 0 || can_retry?
+        ip >= 0
+      end
+
       def backtrack
-        backtrack_one until backtrack_fails? || body[ip].can_retry?
-        if backtrack_fails?
+        trace(:backtrack, "#{name}.backtrack")
+        save_ip = ip
+        reset_ip(body.size - 1)
+        backtrack_one while ip >= save_ip
+        if find_backtrack
+          #backtrack_vars
+          true
+        else
           reset_ip
           fails
-        else
-          backtrack_vars
-          true
         end
       end
 
@@ -187,30 +197,26 @@ module FiberProlog
         end
       end
 
-      def callable?
-        while !body[ip].can_retry? && ip >= 0 do
-          backtrack_one
-        end
-        ip >= 0
-      end
-
       def execute
         if native?
           self.class.native.call(self)
         else
           ok = true
           while ok do
-            if body[ip].call
+            if body[ip].callable? && body[ip].call
               chain_forward
             else
               ok = backtrack
             end
           end
           exit if self.is_a? Goal
+          false
         end
       end
 
       def start
+        #reset_ip
+        @can_retry = true
         return if @fiber
         @fiber = Fiber.new do
           execute
