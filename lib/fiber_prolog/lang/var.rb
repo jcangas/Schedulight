@@ -2,9 +2,10 @@
 # These core ext are not in self file because I have plans to don't need it
 
 class Object
-  def free?
-    false
+  def bound?
+    true
   end
+
   def value
     self
   end
@@ -26,14 +27,16 @@ module FiberProlog
       end
 
       def backtrack!(at_ip)
-        return if self.ip != at_ip
+        return if self.ip != at_ip || @bindings.empty?
+        @bound = false
         Environment.trace :set_var, "#{name} cleared for #{ip}"
         @ip = nil
-        value = nil
+        @value = nil
       end
 
       def mark_ip!(at_ip)
-        @ip = at_ip if !@ip && !free?
+        @ip = at_ip if !@ip && !free? && !@bindings.empty?
+        @bound = true
       end
 
       def to_s
@@ -45,7 +48,8 @@ module FiberProlog
       end
 
       def unbind!
-        @value = nil
+        #@value = nil
+        @ip = nil
         Environment.trace :set_var, "unbind! #{name}"
         return
         @bindings.each {|b| b.remove_binding(self)}
@@ -65,7 +69,7 @@ module FiberProlog
           new_value = other
         end
         if @value != new_value
-          Environment.trace :set_var, "set #{name} = #{new_value}"
+          Environment.trace :set_var, "set #{name} = #{new_value} <#{other}>"
           @value = new_value
           value.init_args if value.is_a?(Rule) #FIXME: I think can be moved to Environment.solve_syms
           update_bindings
@@ -106,11 +110,15 @@ module FiberProlog
         unify(other)
       end
 
+      def bound?
+        @bound
+      end
+
       def unify(other)
         ok = nil
-        if !free? && !other.free?
+        if bound? && other.bound?
             ok = self.value == other.value
-        elsif other.free?
+        elsif !other.bound?
             other.value = self
             ok = true
         else

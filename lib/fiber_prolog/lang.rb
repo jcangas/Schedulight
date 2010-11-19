@@ -11,12 +11,12 @@ FiberProlog::Lang.instance_eval do
 
     equ(:X, :Y).native! {|r| r[:X] == r[:Y] }
 
-    write(:S).native! do |r|
-      case r[:S].value
+    write(:T).native! do |r|
+      case r[:T].value
         when Array
-          ruby_val = r[:S].value.map {|x| x.value}
+          ruby_val = r[:T].value.map {|x| x.value}
         else
-          ruby_val = r[:S].value
+          ruby_val = r[:T].value
       end
       STDOUT.print "#{ruby_val}"
       true

@@ -16,6 +16,7 @@ module FiberProlog
 
         def native!(&impl)
           @native = (lambda &impl)
+          @body = [@native]
           self
         end
 
@@ -79,6 +80,8 @@ module FiberProlog
         start
         trace :calls, "CALL #{self} ip:#{ip}"
         push_sf
+        trace :calls, "pushed_frame #{Environment.top}"
+        #backtrack_vars
         ok = @fiber.resume
         @can_retry = @fiber.alive?
         trace :calls, "#{self} --> #{ok} ip:#{ip} r:#{@can_retry} f:#{!@fiber.nil?}"
@@ -157,7 +160,6 @@ module FiberProlog
 
       def backtrack_one
         trace(:backtrack, "#{body[ip].name} backtrack done")
-        backtrack_vars
         body[ip].restart
         dec_ip
       end
@@ -181,7 +183,6 @@ module FiberProlog
         reset_ip(body.size - 1)
         backtrack_one while ip >= save_ip
         if find_backtrack
-          #backtrack_vars
           true
         else
           reset_ip
@@ -190,6 +191,7 @@ module FiberProlog
       end
 
       def chain_forward
+        mark_vars
         inc_ip
         if ip == body.size
           dec_ip
@@ -199,7 +201,9 @@ module FiberProlog
 
       def execute
         if native?
-          self.class.native.call(self)
+          result = self.class.native.call(self)
+          mark_vars if result
+          result
         else
           ok = true
           while ok do
@@ -212,6 +216,10 @@ module FiberProlog
           exit if self.is_a? Goal
           false
         end
+      end
+
+      def mark_vars
+        vars.each_index {|i| vars[i].mark_ip!(ip)}
       end
 
       def start

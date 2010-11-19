@@ -37,19 +37,20 @@ module FiberProlog
     def self.push_sf(sf)
       @sframes ||= []
       r = sf[:rule]
-      r.vars.each_index {|i| r.vars[i] == solve_syms(r.args[i])}
+      r.vars.each_index {|i| r.vars[i].value = solve_syms(r.args[i])}
       @sframes.push sf
       write_stack(:push) if trace?(:stack)
     end
 
+    def self.top
+      @sframes ||= []
+      @sframes.last
+    end
+
     def self.pop_sf
-      vars = @sframes.last[:vars]
+      vars = self.top[:vars]
       vars.each_index {|i| vars[i].unbind!}
       @sframes.pop
-      unless @sframes.empty?
-        vars = @sframes.last[:vars]
-        vars.each_index {|i| vars[i].mark_ip!(@sframes.last[:ip])}
-      end
       write_stack(:pop) if trace?(:stack)
     end
 
