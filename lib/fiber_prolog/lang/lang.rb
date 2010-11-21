@@ -3,7 +3,7 @@ module FiberProlog
   module Lang
 
     def self.goal
-      Environment.main_goal = define_rule(:goal)
+      Environment.main_goal ||= define_rule(:goal)
     end
 
     def self.trace!(v)

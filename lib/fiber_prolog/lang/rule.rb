@@ -213,7 +213,7 @@ module FiberProlog
               ok = backtrack
             end
           end
-          exit if self.is_a? Goal
+          exit if self.class.name == "Goal"
           false
         end
       end

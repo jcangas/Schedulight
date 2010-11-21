@@ -34,7 +34,7 @@ require 'fiber_prolog/lang'
 module FiberProlog
   def self.run(&block)
     Lang.instance_eval &block
-    Environment.main_goal.new.call
+    Environment.main_goal.new.call if Environment.main_goal
   end
 end
 
