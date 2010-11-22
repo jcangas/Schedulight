@@ -9,7 +9,7 @@ module FiberProlog
       if v
         result = v
       else
-        result = new_var ? Lang::Var.new(vname) : vname
+        result = new_var ? Lang::Var.new(vname, sf[:rule]) : vname
         vars << result if new_var
       end
 
@@ -35,9 +35,14 @@ module FiberProlog
     end
 
     def self.push_sf(sf)
+      trace :calls, "push #{sf}"
       @sframes ||= []
       r = sf[:rule]
-      r.vars.each_index {|i| r.vars[i].value = solve_syms(r.args[i])}
+      r.vars.each_index {|i|
+        arg_value = solve_syms(r.args[i])
+        r.vars[i].init_bounded = arg_value.bound? #!r.args[i].is_a?(Symbol)
+        r.vars[i].value = arg_value
+      }
       @sframes.push sf
       write_stack(:push) if trace?(:stack)
     end
@@ -48,9 +53,10 @@ module FiberProlog
     end
 
     def self.pop_sf
-      vars = self.top[:vars]
+      sf = @sframes.pop
+      trace :calls, "pop #{sf}"
+      vars = sf[:vars]
       vars.each_index {|i| vars[i].unbind!}
-      @sframes.pop
       write_stack(:pop) if trace?(:stack)
     end
 

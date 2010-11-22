@@ -9,7 +9,7 @@ FiberProlog::Lang.instance_eval do
 
     fails.native! { |r|  r.fails }
 
-    equ(:X, :Y).native! {|r| r[:X] == r[:Y] }
+    equ(:X, :Y).native! {|r| r[:X].unify r[:Y] }
 
     write(:T).native! do |r|
       case r[:T].value
@@ -28,7 +28,7 @@ FiberProlog::Lang.instance_eval do
     write_stack(:S).native! { |r| FiberProlog::Environment.write_stack(r[:S].value); true}
 
     genN(:N, :K).native! { |r| (1..r[:N].value).each {|n|
-          r[:K] == n
+          r[:K].unify(n)
           r.suspend
         }
         r.fails
@@ -39,10 +39,10 @@ FiberProlog::Lang.instance_eval do
       results = []
       while r[:P].value.call do
         results << r[:V].value
-        r[:V].unbind!
-        b.each{|v| v.unbind!; r[:V].bind_to(v)}
+        r[:V].value = nil
       end
-      r[:R] == results
+      r[:R].unify results
+      r[:P].value.restart
       true
     }
 end

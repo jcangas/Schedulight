@@ -4,8 +4,7 @@ My personal project assigment for RMU
 
 ## Problem description
 
-We want develop an  software assistant to solve a "typical class shedule problem". The description of problem domain
-maybe like this:
+We want develop an  software assistant to solve a "typical class shedule problem". The description of problem domain maybe like this:
 
 * There are some "time slices", when studentes stay at classrom listen a professor. A simple model can be this
 We denote a slice a start time, assume slices expand to next start.

@@ -32,11 +32,10 @@ module FiberProlog
       attr_reader :sf
 
       def initialize(*args)
-        @body = self.class.body.clone
-        #@body = self.class.body.map {|r| r.clone}
+        @body = self.class.body.map {|r| r.clone}
         @sf = Environment.new_sf(self)
 
-        self.class.vars.each {|n| self.vars << Var.new(n)}
+        self.class.vars.each {|n| self.vars << Var.new(n, self)}
         @args = args.clone
         @can_retry = true
       end
@@ -81,7 +80,6 @@ module FiberProlog
         trace :calls, "CALL #{self} ip:#{ip}"
         push_sf
         trace :calls, "pushed_frame #{Environment.top}"
-        #backtrack_vars
         ok = @fiber.resume
         @can_retry = @fiber.alive?
         trace :calls, "#{self} --> #{ok} ip:#{ip} r:#{@can_retry} f:#{!@fiber.nil?}"
@@ -99,6 +97,13 @@ module FiberProlog
 
       def init_args
         @args = Environment.solve_syms(@args)
+      end
+
+      def restart
+        done
+        reset_ip
+        backtrack_vars
+        @can_retry = true
       end
 
     protected
@@ -152,15 +157,10 @@ module FiberProlog
         self.vars.each{|v| v.backtrack!(ip)}
       end
 
-      def restart
-        #body.each{|r| r.restart}
-        done
-        @can_retry = true
-      end
-
       def backtrack_one
-        trace(:backtrack, "#{body[ip].name} backtrack done")
+        trace(:backtrack, "#{body[ip].name} backtrack one")
         body[ip].restart
+        body[ip].backtrack_vars
         dec_ip
       end
 
@@ -213,7 +213,7 @@ module FiberProlog
               ok = backtrack
             end
           end
-          exit if self.class.name == "Goal"
+          return if self.is_a? Goal
           false
         end
       end
@@ -223,7 +223,6 @@ module FiberProlog
       end
 
       def start
-        #reset_ip
         @can_retry = true
         return if @fiber
         @fiber = Fiber.new do

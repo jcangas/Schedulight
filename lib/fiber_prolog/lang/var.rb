@@ -19,41 +19,43 @@ module FiberProlog
       attr_reader :value
       attr_reader :bindings
       attr_reader :ip
+      attr_accessor :init_bounded
 
-      def initialize(name)
+      def initialize(name, rule=nil)
         @name = name
         @bindings = []
         @ip = nil
-      end
-
-      def backtrack!(at_ip)
-        return if self.ip != at_ip || @bindings.empty?
-        @bound = false
-        Environment.trace :set_var, "#{name} cleared for #{ip}"
-        @ip = nil
-        @value = nil
-      end
-
-      def mark_ip!(at_ip)
-        @ip = at_ip if !@ip && !free? && !@bindings.empty?
-        @bound = true
+        @rule = rule
+        @init_bounded = false
       end
 
       def to_s
         v = value || '?'
-        i = @ip ? "*(#{@ip})" : ''
-        b = @bindings.map{|v| "#{v.name}<#{v.object_id}>"}
-        b = nil if b.empty?
-        Environment.trace?(:vars) ? "#{name}<#{object_id}>#{i}#{b} = #{v}" : "#{name}#{i} = #{v}"
+        bo = self.bound? ? '+' : '-'
+        i = "#{bo}(#{@init_bounded} | #{@ip})"
+        i = nil unless Environment.trace?(:vars)
+        bi = @bindings.map{|v| "#{v.name}"}
+        bi = nil if bi.empty? || !Environment.trace?(:binds)
+        Environment.trace?(:binds) ? "#{name}#{i}#{bi} = #{v}" : "#{name}#{i} = #{v}"
+      end
+
+      def backtrack!(at_ip)
+        return if self.ip != at_ip
+        trace :set_var, "#{name} cleared for #{ip}"
+        @ip = nil
+        @value = nil
+        @init_bounded = false
+      end
+
+      def mark_ip!(at_ip)
+        @ip = at_ip if !@ip && @value
       end
 
       def unbind!
-        #@value = nil
-        @ip = nil
-        Environment.trace :set_var, "unbind! #{name}"
-        return
+        Environment.trace :set_var, "unbind! #{self}"
         @bindings.each {|b| b.remove_binding(self)}
         @bindings = []
+        @init_bounded = false
       end
 
       def value
@@ -68,18 +70,12 @@ module FiberProlog
         else
           new_value = other
         end
-        if @value != new_value
-          Environment.trace :set_var, "set #{name} = #{new_value} <#{other}>"
-          @value = new_value
-          value.init_args if value.is_a?(Rule) #FIXME: I think can be moved to Environment.solve_syms
-          update_bindings
-        end
+        trace :set_var, "set #{name} = #{new_value} <#{other}>"
+        update!(new_value, other.is_a?(Var) ? other : nil)
         self
       end
 
       def binded_to?(target)
-        # THIS line gets stack overflow!!
-        #@bindings.include?(target)
         bindings.map{|x| x.object_id}.include?(target.object_id)
       end
 
@@ -97,33 +93,39 @@ module FiberProlog
         @bindings.delete(target)
       end
 
+      def trace(channel, msg)
+        Environment.trace channel, msg
+      end
+
+      def update!(new_value, updated_by)
+        return if @value == new_value
+        trace :set_var, "update! #{name} = #{new_value} <#{updated_by}>"
+        @value = new_value
+        @value.init_args if value.is_a?(Rule) #FIXME: I think can be moved to Environment.solve_syms
+
+        update_bindings
+      end
+
       def update_bindings
-          Environment.trace :set_var, "#{name} updates #{@bindings}"
-        @bindings.each {|b| b.value = value }
+        @bindings.each {|b| b.update!(@value, self)}
       end
 
       def free?
         @value.nil?
       end
 
-      def ==(other)
-        unify(other)
-      end
-
       def bound?
-        @bound
+       (@init_bounded && !self.free?) || !@ip.nil? && ((@rule.ip > @ip))
       end
 
       def unify(other)
-        ok = nil
+        ok = true
         if bound? && other.bound?
             ok = self.value == other.value
         elsif !other.bound?
             other.value = self
-            ok = true
         else
           self.value = other
-          ok = true
         end
         ok
       end

@@ -79,11 +79,9 @@ FiberProlog.run do
   # Many test are working, but some issues are open
 
 
-
-
   goal0.if time_mark(:TM), classroom(:C), equ(:CS, [:TM, :C]), writeln(:CS), fails
 
-  goal3.if time_mark(:TM), classroom(:C), subjects_for(:S, :C), teachers_for(:T, :S),
+  goal.if time_mark(:TM), classroom(:C), subjects_for(:S, :C), teachers_for(:T, :S),
           writeln([:TM, :C, :S, :T]) , fails
 end
 
