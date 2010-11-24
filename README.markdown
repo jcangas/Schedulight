@@ -44,7 +44,7 @@ Class Room | Grade
 We want to give a "problem description for a schedule" to our assistant, and request it to "solve". The asistant outputs (some time later, of course)
 a shcedule arrangement for tipical week class calendar, one for each classrom. It loks like this:
 
-     Class Room "A"
+    Class Room "A"
 
 Professors  |  Subjects
 ------------|---------------
