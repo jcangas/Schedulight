@@ -30,11 +30,9 @@ teacher('Bob') {
 grade('First') {
 
     workload {
-        history 3
-        math   5
-        biology  4
-        computers 4
-        philosofy 3
+        math   1
+        computers 1
+        philosofy 1
     }
 }
 

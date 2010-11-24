@@ -7,36 +7,40 @@ module Schedulight
 
     Model = Struct.new('Model', :id) do
 
-    def self.all
-      @all ||= []
-      @all
-    end
+      def self.all
+        @all ||= []
+        @all
+      end
 
-    def to_s
-       n = self.class.name.split('::').last
-      "{#{n} id= #{id}}"
-    end
+      def class_id
+        self.class.name.split('::').last.each_char.select {|c| c == c.upcase}.join
+      end
 
-    def inspect
-      to_s
-    end
+      def to_s
+         n = class_id
+        "{#{n}: #{id}}"
+      end
 
-    def initialize(id,  &block )
-      self.id = id.to_s
-      self.instance_eval(&block) if block
-      self.class.all << self
-    end
+      def inspect
+        to_s
+      end
 
-    def self.find(ids)
-      result = findall(ids)
-      result.size == 1 ? result.first : result
-    end
+      def initialize(id,  &block )
+        self.id = id.to_s
+        self.instance_eval(&block) if block
+        self.class.all << self
+      end
 
-    def self.findall(ids)
-      keys = [ids].flatten
-      all.select { |x| keys.include?(x.id) }
+      def self.find(ids)
+        result = findall(ids)
+        result.size == 1 ? result.first : result
+      end
+
+      def self.findall(ids)
+        keys = [ids].flatten
+        all.select { |x| keys.include?(x.id) }
+      end
     end
-  end
 
   class TimeMark  < Model
   end
@@ -72,5 +76,18 @@ module Schedulight
       end
     end
   end
+
+
+  Slice = Struct.new('Slice', :time_mark, :classroom, :subject, :teacher) do
+    def inspect
+      to_s
+    end
+
+    def to_s
+       #n = self.class.name.split('::').last
+      "<#{self.values.join(', ')}>"
+    end
+  end
+
 end
 

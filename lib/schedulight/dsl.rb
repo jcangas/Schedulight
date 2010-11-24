@@ -1,3 +1,5 @@
+require 'schedulight/models'
+
 module Schedulight
   class DSL
     def load(file_name)
