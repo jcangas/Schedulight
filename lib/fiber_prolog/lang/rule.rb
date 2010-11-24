@@ -16,7 +16,6 @@ module FiberProlog
 
         def native!(&impl)
           @native = (lambda &impl)
-          @body = [@native]
           self
         end
 
@@ -33,6 +32,7 @@ module FiberProlog
 
       def initialize(*args)
         @body = self.class.body.map {|r| r.clone}
+        @native = self.class.native.clone if self.class.native
         @sf = Environment.new_sf(self)
 
         self.class.vars.each {|n| self.vars << Var.new(n, self)}
@@ -48,10 +48,6 @@ module FiberProlog
         find_var(vname)
       end
 
-      def native?
-        self.class.native
-      end
-
       def name
         return @name if @name
         @name = self.class.name.split('::').last
@@ -60,11 +56,11 @@ module FiberProlog
       end
 
       def native
-        self.class.native
+        @native
       end
 
       def native?
-        self.class.native
+        @native
       end
 
       def ip

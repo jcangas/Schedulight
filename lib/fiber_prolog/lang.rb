@@ -34,8 +34,14 @@ FiberProlog::Lang.instance_eval do
         r.fails
     }
 
+    member(:X, :L).native! {|r| l = r[:L].value.clone
+         while !l.empty? do
+           r.suspend if r[:X].unify(l.shift)
+         end
+    }
+
+
     collect(:V, :P, :R).native! { |r|
-      b = r[:V].bindings
       results = []
       while r[:P].value.call do
         results << r[:V].value

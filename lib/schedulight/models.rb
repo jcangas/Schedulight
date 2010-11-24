@@ -22,15 +22,19 @@ module Schedulight
     end
 
     def initialize(id,  &block )
-      self.id = id
+      self.id = id.to_s
       self.instance_eval(&block) if block
       self.class.all << self
     end
 
     def self.find(ids)
+      result = findall(ids)
+      result.size == 1 ? result.first : result
+    end
+
+    def self.findall(ids)
       keys = [ids].flatten
-      result = all.select { |x| keys.include?(x.id) }
-      keys.size == 1 ? result.first : result
+      all.select { |x| keys.include?(x.id) }
     end
   end
 
@@ -64,7 +68,7 @@ module Schedulight
   private # we don't want expose this "trick"
     class Workload < Hash
       def method_missing(name, *args)
-        self[name] = args[0]
+        self[name.to_s] = args[0]
       end
     end
   end

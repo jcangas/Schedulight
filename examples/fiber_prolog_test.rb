@@ -52,13 +52,11 @@ FiberProlog.run do
 
   }.each do |test, desc|
     goal.body[0] = self.send test
-    puts desc
-    goal.new.call
+    #puts desc
+    #goal.new.call
   end
+  sqr(:X, :Y).native! {|r| r[:Y].unify(r[:X].value * r[:X].value) }
+  goal.if map([1,2,3],sqr(:X,:Y), :S ), writeln(:S),fails
 
-  goal.if cut #list_test
-
-  #member(:X, [ :X | :T])
-  #member(:X, [ _ | :T]).if member(:X, :T)
 end
 

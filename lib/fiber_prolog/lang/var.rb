@@ -43,7 +43,7 @@ module FiberProlog
         return if self.ip != at_ip
         trace :set_var, "#{name} cleared for #{ip}"
         @ip = nil
-        @value = nil
+        #@value = nil
         @init_bounded = false
       end
 

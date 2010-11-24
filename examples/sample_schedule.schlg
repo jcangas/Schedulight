@@ -2,44 +2,43 @@
 
 # DSL sample
 
-hours_per_day 5
+hours_per_day 3
 
-subjects :math, :biology, :computers, :idiom, :philosofy
+subjects 'math', 'biology', 'computers', 'philosofy'
 
-teacher(:Jhon) {
+teacher('Jhon') {
 
-  gives :math, :biology, :computers
-
-}
-
-
-teacher(:Mary) {
-
-   gives :computers, :idiom, :philosofy
+  gives 'math', 'computers'
 
 }
 
 
-teacher(:Bob) {
+teacher('Mary') {
 
-    gives :history, :idiom, :philosofy
+   gives 'idiom', 'philosofy'
 
 }
 
 
-grade(:First) {
+teacher('Bob') {
+
+    gives 'history'
+
+}
+
+
+grade('First') {
 
     workload {
         history 3
         math   5
         biology  4
         computers 4
-        idiom  5
         philosofy 3
     }
 }
 
 classroom("A") {
-    grade :First
+    grade 'First'
 }
 

@@ -17,7 +17,7 @@ dsl.load(Pathname(__FILE__).dirname.parent + 'examples' + 'sample_schedule.schlg
 FiberProlog.run do
   trace! stack: !true,
     calls: true,
-    backtrack: true,
+    backtrack: !true,
     vars: !true,
     set_var: !true,
     trace: ARGV[0]
@@ -27,24 +27,24 @@ FiberProlog.run do
 
   # Here is used to retrieve the problem input
   time_mark(:T).native! {|r| Schedulight::TimeMark.all.each{|t|
-      r[:T] == t
+      r[:T].unify t
       r.suspend
     }
     r.fails
   }
 
   classroom(:C).native! {|r| Schedulight::Classroom.all.each{|c|
-      r[:C] == c
+      r[:C].unify c
       r.suspend
     }
     r.fails
   }
 
   subjects_for(:S, :C).native! { |r|
-     wkld = Schedulight::Grade.find(r[:C].value.grade).workload
-     subjs = Schedulight::Subject.find(wkld.keys)
+      wkld = Schedulight::Grade.find(r[:C].value.grade).workload
+      subjs = Schedulight::Subject.findall(wkld.keys)
      subjs.each do |s|
-        r[:S] == s
+        r[:S].value = s
         r.suspend
       end
       r.fails
@@ -52,8 +52,9 @@ FiberProlog.run do
 
   teachers_for(:T, :S).native! { |r|
     tchs = Schedulight::Teacher.all.select { |x| x.subjects.include?(r[:S].value.id) }
+
     tchs.each do |t|
-      r[:T] == t
+      r[:T].value = t
       r.suspend
     end
     r.fails
@@ -73,15 +74,22 @@ FiberProlog.run do
   # candidate solution in :Sol. If validate(:Sol), report an stop,
   # else backtrack for another candidate.
 
-  goal2.if collect(:CS, class_sched(:CS), :SCH), candidate(:CS, :Sol), validate(:Sol), cut, report(:Sol)
+  # goal2.if collect(:CS, class_sched(:CS), :SCH), candidate(:CS, :Sol), validate(:Sol), cut, report(:Sol)
 
   # Some goals I'm testing. The clause named "goal" is the true main clause
   # Many test are working, but some issues are open
 
+  expand(:TM, :C, :L).if subjects_for(:S, :C), teachers_for(:T, :S), equ(:L, [:TM, :C, :S, :T])
 
-  goal0.if time_mark(:TM), classroom(:C), equ(:CS, [:TM, :C]), writeln(:CS), fails
+  goal.if time_mark(:TM), classroom(:C), expand(:TM, :C, :SOL), writeln(:SOL),fails
 
-  goal.if time_mark(:TM), classroom(:C), subjects_for(:S, :C), teachers_for(:T, :S),
-          writeln([:TM, :C, :S, :T]) , fails
+  goal_1.if time_mark(:TM), classroom(:C),
+          subjects_for(:S, :C),
+          teachers_for(:T, :S),
+          writeln([:TM, :C, :S, :T]), fails
+
+  goal_2.if collect(:CS, class_sched(:CS), :SCH), cut, candidate(:SCH, :Sol), writeln(:SCH), fails
+
+  goal_3.if time_mark(:TM), write(:TM), fails
 end
 
