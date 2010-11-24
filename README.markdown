@@ -24,38 +24,39 @@ We denote a slice with a mark start time, assume slices expand to next start.
 * There are some grades (or levels). A grade groups some courses with weekly work load
 
 
-            Grade "First"
-   -----------------------------
-        Subject   | Workload
-   ---------------|--------------
-        History   | 3 hours
-        Math      | 5 hours
-        Biology   | 4 hours
-        Computers | 4 hours
-        Idiom     | 5 hours
-        Philosofy | 3 hours
+    Grade "First"
+-------------|---------------
+Subject   | Workload
+---------------|--------------
+History   | 3 hours
+Math      | 5 hours
+Biology   | 4 hours
+Computers | 4 hours
+Idiom     | 5 hours
+Philosofy | 3 hours
 
 * Finally, there are, some classrooms when professors and their students meets at some time slice
 
-    Class Room | Grade
-   ------------|--------
-        "A"    | "First"
-        "B"    | "Second"
+Class Room | Grade
+------------|--------
+    "A"    | "First"
+    "B"    | "Second"
 
 We want to give a "problem description for a schedule" to our assistant, and request it to "solve". The asistant outputs (some time later, of course)
 a shcedule arrangement for tipical week class calendar, one for each classrom. It loks like this:
 
      Class Room "A"
 
-            Professors
+Professors  |  Subjects
+------------|---------------
       Jhon  | Math, Biology
       Mary  | Computers, Idiom
       Bob   | History, Philosofy
 
 
-  Time |  Monday   | ...
------------------------
-    8   | Biology  | ...
+  Time  |  Monday   | ...
+--------|-----------|-----
+    8   | Biology   | ...
     9   | Computers | ...
      .       .          .
      .       .          .
