@@ -9,8 +9,7 @@ We want develop an  software assistant to solve a "typical class shedule problem
 * There are some "time slices", when studentes stay at classrom listen a professor. A simple model can be this
 We denote a slice with a mark start time, assume slices expand to next start.
 
-        Time Marks
-    8, 9, 10, 11, 12
+        Time Marks:  8, 9, 10, 11, 12
 
 
 * There area list of avaiable professors and subjects they can take
