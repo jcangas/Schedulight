@@ -26,7 +26,6 @@ We denote a slice with a mark start time, assume slices expand to next start.
 
     Grade "First"
 
-----------|---------------
 Subject   | Workload
 ---------------|--------------
 History   | 3 hours
