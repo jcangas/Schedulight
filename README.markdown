@@ -7,55 +7,56 @@ My personal project assigment for RMU
 We want develop an  software assistant to solve a "typical class shedule problem". The description of problem domain maybe like this:
 
 * There are some "time slices", when studentes stay at classrom listen a professor. A simple model can be this
-We denote a slice a start time, assume slices expand to next start.
+We denote a slice with a mark start time, assume slices expand to next start.
 
-    time_slices => [8, 9, 10, 11, 12]
+        Time Marks
+    8, 9, 10, 11, 12
 
 
-* There area lst of avaiable professors and courses they can take
+* There area list of avaiable professors and subjects they can take
 
-     professors = {
-     [:jhon => [:math, :biology, :computers],
-      :mary => [:computers, :idiom, :philosofy],
-      :bob => [:history, :idiom, :philosofy],
-      }
+ Professors | Subjects
+ -----------|------------
+      Jhon  | Math, Biology, Computers
+      Mary  | Computers, Idiom, Philosofy
+      Bob   | History, Idiom, Philosofy
 
 * There are some grades (or levels). A grade groups some courses with weekly work load
 
-    grade = {
-    :name => :First,
-    :workload => {
-        :history => 3.hours
-        :math => 5.hours,
-        :biology => 4.hours,
-        :computers => 4.hours ,
-        :idiom => 5.hours,
-        :philosofy => 3.hours
-    }
-}
+
+            Grade "First"
+   -----------------------------
+        Subject   | Workload
+   ---------------|--------------
+        History   | 3 hours
+        Math      | 5 hours
+        Biology   | 4 hours
+        Computers | 4 hours
+        Idiom     | 5 hours
+        Philosofy | 3 hours
 
 * Finally, there are, some classrooms when professors and their students meets at some time slice
 
-classromms = {
-    :A =>  :First,
-    :B => :First,
-}
+    Class Room | Grade
+   ------------|--------
+        "A"    | "First"
+        "B"    | "Second"
 
 We want to give a "problem description for a schedule" to our assistant, and request it to "solve". The asistant outputs (some time later, of course)
 a shcedule arrangement for tipical week class calendar, one for each classrom. It loks like this:
 
-               ---- Class Room :A -----
+     Class Room "A"
 
-            professors:
-      :jhon => :math, :biology
-      :mary => :computers, :idiom
-      :bob => :history, :philosofy
+            Professors
+      Jhon  | Math, Biology
+      Mary  | Computers, Idiom
+      Bob   | History, Philosofy
 
 
-   Time |  Monday   | ...
+  Time |  Monday   | ...
 -----------------------
-    8   | :biology  | ...
-    9   | computers | ...
+    8   | Biology  | ...
+    9   | Computers | ...
      .       .          .
      .       .          .
      .       .          .

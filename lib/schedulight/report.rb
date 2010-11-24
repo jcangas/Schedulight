@@ -4,7 +4,24 @@
 module Schedulight
   class Report
     def publish(schedule)
-      puts schedule.inspect
+      group_by_classroom(schedule).each_pair {|cr, sch|
+        puts ""
+        puts "----------------------------------"
+        puts "| -- Schedule for class #{cr.id} --     |"
+        puts "|------|------------|------------|"
+        puts "| Time |  Subject   | Teacher    |"
+        puts "|------|------------|------------|"
+        sch.each {|slice|
+          puts "| %4d | %10s | %10s |" % [slice[:time_mark].id, slice[:subject].id, slice[:teacher].id]
+          puts "|------|------------|------------|"
+        }
+      }
+      puts ""
+    end
+
+    def group_by_classroom(schedule)
+      schedule.group_by{|slice| slice[:classroom]}
+
     end
   end
 end

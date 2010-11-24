@@ -7,17 +7,17 @@ require 'pathname'
 
 
 module Schedulight
-  class Main
-    def run
+  class Application
+    def run(file_name)
       dsl = DSL.new
 
-      dsl.load(Pathname(__FILE__).dirname.parent + 'examples' + 'sample_schedule.schlg' )
-
+      dsl.load(file_name)
       solver = Solver.new
 
       report = Report.new
 
-      puts "---Solving----"
+      puts "Solving #{file_name}"
+      puts "let me think a bit ..."
       solution = solver.solve?
       if solution
         report.publish solution
